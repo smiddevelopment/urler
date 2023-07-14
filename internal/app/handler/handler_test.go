@@ -42,7 +42,6 @@ func TestEncodeUrlHandler(t *testing.T) {
 			// проверяем код ответа
 			assert.Equal(t, res.StatusCode, test.want.code)
 			// получаем и проверяем тело запроса
-			//defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
 
 			require.NoError(t, err)
@@ -83,7 +82,6 @@ func TestDecodeUrlHandler(t *testing.T) {
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
 			// получаем и проверяем тело запроса
-			defer res.Body.Close()
 			_, err := io.ReadAll(res.Body)
 
 			require.NoError(t, err)
