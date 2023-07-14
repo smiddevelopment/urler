@@ -25,7 +25,7 @@ func TestEncodeUrlHandler(t *testing.T) {
 			name: "encode url #1",
 			want: want{
 				code:        201,
-				response:    "12345",
+				response:    "EwHXdJfB",
 				contentType: "text/plain",
 			},
 		},
@@ -42,7 +42,7 @@ func TestEncodeUrlHandler(t *testing.T) {
 			// проверяем код ответа
 			assert.Equal(t, res.StatusCode, test.want.code)
 			// получаем и проверяем тело запроса
-			defer res.Body.Close()
+			//defer res.Body.Close()
 			resBody, err := io.ReadAll(res.Body)
 
 			require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestDecodeUrlHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/12345", nil)
+			request := httptest.NewRequest(http.MethodGet, "/EwHXdJfB", nil)
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
@@ -81,7 +81,7 @@ func TestDecodeUrlHandler(t *testing.T) {
 
 			res := w.Result()
 			// проверяем код ответа
-			assert.Equal(t, res.StatusCode, test.want.code)
+			assert.Equal(t, test.want.code, res.StatusCode)
 			// получаем и проверяем тело запроса
 			defer res.Body.Close()
 			_, err := io.ReadAll(res.Body)
