@@ -1,18 +1,14 @@
 package main
 
 import (
-	"net/http"
-
+	"github.com/labstack/echo/v4"
 	"github.com/smiddevelopment/urler.git/internal/app/handler"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, handler.EncodeUrl)
-	mux.HandleFunc(`/{id}`, handler.DecodeUrl)
+	e := echo.New()
+	e.POST(`/`, handler.EncodeUrl)
+	e.GET(`/{id}`, handler.DecodeUrl)
 
-	err := http.ListenAndServe(`:8080`, mux)
-	if err != nil {
-		panic(err)
-	}
+	e.Logger.Fatal(e.Start(":8080"))
 }

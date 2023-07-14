@@ -5,63 +5,46 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/labstack/echo/v4"
+
 	"github.com/smiddevelopment/urler.git/internal/app/shortener"
 )
 
-func EncodeUrl(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-
-		return
-	}
-
-	body, err := io.ReadAll(r.Body)
+func EncodeUrl(c echo.Context) error {
+	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-
-		return
+		return echo.NewHTTPError(http.StatusInternalServerError, "Please enter valid body")
 	}
 
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			c.Error(err)
 
 			return
 		}
-	}(r.Body)
+	}(c.Request().Body)
 	bodyString := string(body)
 	if bodyString != "" {
-		w.Header().Set("Content-Type", "text/plain")
-		w.Header().Set("Content-Length", "30")
-		w.WriteHeader(http.StatusCreated)
-		_, err := w.Write([]byte(shortener.EncodeString(bodyString)))
+		c.Response().Header().Set("Content-Type", "text/plain")
+		c.Response().Header().Set("Content-Length", "30")
+		c.Response().WriteHeader(http.StatusCreated)
+		_, err := c.Response().Write([]byte(shortener.EncodeString(bodyString)))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-
-			return
+			return echo.NewHTTPError(http.StatusInternalServerError, "Please enter valid id")
 		}
-
-		return
 	}
-
-	http.Error(w, "body is empty!", http.StatusBadRequest)
+	return echo.NewHTTPError(http.StatusBadRequest, "Please enter not empty body!")
 }
 
-func DecodeUrl(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-
-		return
+func DecodeUrl(c echo.Context) error {
+	if c.Request().URL.Path == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Id is empty!")
 	}
 
-	if r.URL.Path == "" {
-		http.Error(w, "id is empty!", http.StatusBadRequest)
+	c.Response().Header().Set("Content-Type", "text/plain")
+	c.Response().Header().Set("Location", shortener.DecodeString(strings.TrimPrefix(c.Request().URL.Path, "/")))
+	c.Response().WriteHeader(http.StatusTemporaryRedirect)
 
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Location", shortener.DecodeString(strings.TrimPrefix(r.URL.Path, "/")))
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	return nil
 }

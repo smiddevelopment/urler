@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/labstack/echo/v4"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,11 +34,13 @@ func TestEncodeUrlHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			e := echo.New()
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://practicum.yandex.ru/"))
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			EncodeUrl(w, request)
+			c := e.NewContext(request, w)
+			EncodeUrl(c)
 
 			res := w.Result()
 			// проверяем код ответа
@@ -72,11 +76,13 @@ func TestDecodeUrlHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			e := echo.New()
 			request := httptest.NewRequest(http.MethodGet, "/EwHXdJfB", nil)
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			DecodeUrl(w, request)
+			c := e.NewContext(request, w)
+			DecodeUrl(c)
 
 			res := w.Result()
 			// проверяем код ответа
