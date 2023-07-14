@@ -22,13 +22,25 @@ func EncodeUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
+	}(r.Body)
 	bodyString := string(body)
 	if bodyString != "" {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(shortener.EncodeString(bodyString)))
+		_, err := w.Write([]byte(shortener.EncodeString(bodyString)))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
 
 		return
 	}
