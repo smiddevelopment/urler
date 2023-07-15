@@ -10,7 +10,17 @@ import (
 	"github.com/smiddevelopment/urler.git/internal/app/shortener"
 )
 
-func EncodeUrl(c echo.Context) error {
+type Handler struct {
+	resUrl *string
+}
+
+func New(resUrl *string) *Handler {
+	return &Handler{
+		resUrl: resUrl,
+	}
+}
+
+func (h *Handler) EncodeUrl(c echo.Context) error {
 	body, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Please enter valid body")
@@ -24,20 +34,29 @@ func EncodeUrl(c echo.Context) error {
 			return
 		}
 	}(c.Request().Body)
+
 	bodyString := string(body)
+
 	if bodyString != "" {
 		c.Response().Header().Set("Content-Type", "text/plain")
 		c.Response().Header().Set("Content-Length", "30")
 		c.Response().WriteHeader(http.StatusCreated)
-		_, err := c.Response().Write([]byte(shortener.EncodeString(bodyString)))
-		if err != nil {
+
+		defaultUrl := "http://localhost:8080"
+
+		if h.resUrl != nil {
+			defaultUrl = *h.resUrl
+		}
+
+		if _, err := c.Response().Write([]byte(defaultUrl + shortener.EncodeString(bodyString))); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Please enter valid id")
 		}
 	}
+
 	return echo.NewHTTPError(http.StatusBadRequest, "Please enter not empty body!")
 }
 
-func DecodeUrl(c echo.Context) error {
+func (h *Handler) DecodeUrl(c echo.Context) error {
 	if c.Request().URL.Path == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Id is empty!")
 	}
