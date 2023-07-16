@@ -21,8 +21,9 @@ func DecodeString(val string) string {
 
 func checkData(val string, isFind bool) encodedUrl {
 	var data []encodedUrl
+	filePath := "./static/urls.json"
 
-	file, err := os.ReadFile("../../../static/urls.json")
+	file, err := os.ReadFile(filePath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,7 +48,7 @@ func checkData(val string, isFind bool) encodedUrl {
 		if err != nil {
 			log.Fatal(err)
 		}
-		err = os.WriteFile("../../../static/urls.json", content, 0644)
+		err = os.WriteFile(filePath, content, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
