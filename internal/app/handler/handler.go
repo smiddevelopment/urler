@@ -35,7 +35,7 @@ func EncodeUrl(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
-		_, err := w.Write([]byte(shortener.EncodeString(bodyString)))
+		_, err := w.Write([]byte(r.Host + "/" + shortener.EncodeString(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
