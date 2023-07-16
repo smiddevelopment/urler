@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -32,11 +33,11 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 	}(r.Body)
 	bodyString := string(body)
 	if bodyString != "" {
-		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", "30")
+		w.WriteHeader(http.StatusCreated)
 
-		_, err := w.Write([]byte(r.Host + "/" + shortener.EncodeString(bodyString)))
+		_, err := w.Write([]byte("http://localhost:8080/" + shortener.EncodeString(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -56,13 +57,21 @@ func DecodeURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, v := range r.Cookies() {
+		fmt.Printf("%s = %s\r\n", v.Name, v.Value)
+	}
+
 	if r.URL.Path == "" {
 		http.Error(w, "id is empty!", http.StatusBadRequest)
 
 		return
 	}
+	resLink := shortener.DecodeString(strings.TrimPrefix(r.URL.Path, "/"))
+	if resLink != "" {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Location", resLink)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+	}
 
-	w.WriteHeader(http.StatusTemporaryRedirect)
-	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Location", shortener.DecodeString(strings.TrimPrefix(r.URL.Path, "/")))
+	http.Error(w, "this Id invalid!", http.StatusBadRequest)
 }
