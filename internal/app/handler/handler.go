@@ -8,7 +8,7 @@ import (
 	"github.com/smiddevelopment/urler.git/internal/app/shortener"
 )
 
-func EncodeUrl(w http.ResponseWriter, r *http.Request) {
+func EncodeURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 
@@ -48,7 +48,7 @@ func EncodeUrl(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "body is empty!", http.StatusBadRequest)
 }
 
-func DecodeUrl(w http.ResponseWriter, r *http.Request) {
+func DecodeURL(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 
