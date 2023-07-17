@@ -37,7 +37,7 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 		if flag.Lookup("b") != nil {
 			resURL = flag.Lookup("b").Value.(flag.Getter).String()
 		}
-
+		resURL = "http://localhost:8080"
 		_, err := w.Write([]byte(resURL + "/" + storage.Add(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

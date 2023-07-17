@@ -22,6 +22,7 @@ func main() {
 	r.Get("/{id}", handler.DecodeURL)
 
 	servURL := flag.Lookup("a").Value.(flag.Getter).String()
+	servURL = "localhost:8080"
 	err := http.ListenAndServe(servURL, r)
 	if err != nil {
 		panic(err)
