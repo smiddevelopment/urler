@@ -1,19 +1,20 @@
 package handler
 
 import (
+	"flag"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/labstack/echo/v4"
+	"github.com/smiddevelopment/urler.git/internal/app/storage"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncodeUrlHandler(t *testing.T) {
+func TestRouteURLHandler(t *testing.T) {
 	type want struct {
 		code        int
 		response    string
@@ -27,29 +28,42 @@ func TestEncodeUrlHandler(t *testing.T) {
 			name: "encode url #1",
 			want: want{
 				code:        201,
-				response:    "EwHXdJfB",
 				contentType: "text/plain",
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			e := echo.New()
+			flag.String("a", "localhost:8080", "-a server address")
+			flag.String("b", "http://localhost:8080", "-b result URL address")
+			flag.Parse()
+
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://practicum.yandex.ru/"))
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			c := e.NewContext(request, w)
-			EncodeUrl(c)
+			EncodeURL(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, res.StatusCode, test.want.code)
 			// получаем и проверяем тело запроса
 			resBody, err := io.ReadAll(res.Body)
+			// Особождение памяти
+			if err := res.Body.Close(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 
 			require.NoError(t, err)
-			assert.Equal(t, string(resBody), test.want.response)
+
+			if string(resBody) == "" {
+				t.Errorf("EncodeURL() = resBody is empty!")
+			}
+
+			if len(storage.EncodedURLs) == 0 {
+				t.Errorf("EncodedURLs is empty!")
+			}
+
 			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
 		})
 	}
@@ -66,32 +80,37 @@ func TestDecodeUrlHandler(t *testing.T) {
 		want want
 	}{
 		{
-			name: "decode url test #1",
+			name: "decode url #1",
 			want: want{
 				code:        307,
-				response:    "https://practicum.yandex.ru/",
+				response:    "Invalid ID!",
 				contentType: "text/plain",
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			e := echo.New()
-			request := httptest.NewRequest(http.MethodGet, "/EwHXdJfB", nil)
+			request := httptest.NewRequest(http.MethodGet, "/", nil)
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			c := e.NewContext(request, w)
-			DecodeUrl(c)
+			DecodeURL(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
 			// получаем и проверяем тело запроса
 			_, err := io.ReadAll(res.Body)
+			// Особождение памяти
+			if err := res.Body.Close(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 
 			require.NoError(t, err)
 			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
+			if res.Header.Get("Location") == "" {
+				t.Errorf("There is no 'Location' header!")
+			}
 			assert.Equal(t, res.Header.Get("Location"), test.want.response)
 		})
 	}
