@@ -8,10 +8,8 @@ import (
 	"github.com/smiddevelopment/urler.git/internal/app/handler"
 )
 
-var port *string
-
 func init() {
-	port = flag.String("a", "localhost:8080", "-a server port")
+	flag.String("a", "localhost:8080", "-a server address")
 	flag.String("b", "http://localhost:8080/", "-b result URL address")
 }
 
@@ -23,7 +21,8 @@ func main() {
 	r.Post("/", handler.EncodeURL)
 	r.Get("/{id}", handler.DecodeURL)
 
-	err := http.ListenAndServe(*port, r)
+	servURL := flag.Lookup("a").Value.(flag.Getter).String()
+	err := http.ListenAndServe(servURL, r)
 	if err != nil {
 		panic(err)
 	}
