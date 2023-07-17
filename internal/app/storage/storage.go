@@ -5,7 +5,7 @@ import "math/rand"
 var EncodedURLs []EncodedURL
 
 type EncodedURL struct {
-	Id  string
+	ID  string
 	URL string
 }
 
@@ -13,30 +13,30 @@ var urlRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12345
 
 func Add(url string) string {
 	newURL := EncodedURL{
-		Id:  generateRandomID(),
+		ID:  generateRandomID(),
 		URL: url,
 	}
 
 	if EncodedURLs == nil {
 		EncodedURLs = []EncodedURL{newURL}
 
-		return newURL.Id
+		return newURL.ID
 	}
 
 	for i := 0; i < len(EncodedURLs); i++ {
 		if url == EncodedURLs[i].URL {
-			return EncodedURLs[i].Id
+			return EncodedURLs[i].ID
 		}
 	}
 
 	_ = append(EncodedURLs, newURL)
 
-	return newURL.Id
+	return newURL.ID
 }
 
 func Get(id string) string {
 	for i := 0; i < len(EncodedURLs); i++ {
-		if id == EncodedURLs[i].Id {
+		if id == EncodedURLs[i].ID {
 			return EncodedURLs[i].URL
 		}
 	}
