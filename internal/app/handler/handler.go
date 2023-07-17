@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"strings"
 
-	"github.com/smiddevelopment/urler.git/internal/app/shortener"
+	"github.com/smiddevelopment/urler.git/internal/app/storage"
 )
 
 func EncodeURL(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +36,7 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
 
-		_, err := w.Write([]byte("http://localhost:8080/" + shortener.EncodeString(bodyString)))
+		_, err := w.Write([]byte("http://localhost:8080/" + storage.Add(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -57,16 +56,7 @@ func DecodeURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, v := range r.Cookies() {
-		fmt.Printf("%s = %s\r\n", v.Name, v.Value)
-	}
-
-	if r.URL.Path == "" {
-		http.Error(w, "id is empty!", http.StatusBadRequest)
-
-		return
-	}
-	resLink := shortener.DecodeString(strings.TrimPrefix(r.URL.Path, "/"))
+	resLink := storage.Get(strings.TrimPrefix(r.URL.Path, "/"))
 	if resLink != "" {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Location", resLink)
