@@ -28,7 +28,6 @@ func TestRouteURLHandler(t *testing.T) {
 			want: want{
 				code:        201,
 				contentType: "text/plain",
-				response:    "http://localhost:8080/",
 			},
 		},
 	}
@@ -38,8 +37,7 @@ func TestRouteURLHandler(t *testing.T) {
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			decodeHandler := New(&test.want.response)
-			decodeHandler.EncodeURL(w, request)
+			EncodeURL(w, request)
 
 			res := w.Result()
 			// проверяем код ответа

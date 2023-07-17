@@ -8,19 +8,19 @@ import (
 	"github.com/smiddevelopment/urler.git/internal/app/handler"
 )
 
-var port, resUrl *string
+var port *string
 
 func init() {
 	port = flag.String("a", "localhost:8888", "-a server port")
-	resUrl = flag.String("b", "http://localhost:8080/", "-b result URL address")
-	flag.Parse()
+	flag.String("b", "http://localhost:8080/", "-b result URL address")
 }
 
 func main() {
+	flag.Parse()
+
 	r := chi.NewRouter()
 
-	decodeHandler := handler.New(resUrl)
-	r.Post("/", decodeHandler.EncodeURL)
+	r.Post("/", handler.EncodeURL)
 	r.Get("/{id}", handler.DecodeURL)
 
 	err := http.ListenAndServe(*port, r)

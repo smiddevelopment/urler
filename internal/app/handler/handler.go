@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"flag"
 	"io"
 	"net/http"
 	"strings"
@@ -8,18 +9,8 @@ import (
 	"github.com/smiddevelopment/urler.git/internal/app/storage"
 )
 
-type Handler struct {
-	resURL *string
-}
-
-func New(resURL *string) *Handler {
-	return &Handler{
-		resURL: resURL,
-	}
-}
-
 // EncodeURL обработка запроса POST, кодирование ссылки
-func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
+func EncodeURL(w http.ResponseWriter, r *http.Request) {
 	// Чтение тела запроса
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -42,7 +33,8 @@ func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
 		// Получение значения ID из хранилища или добавление новой ссылки
-		_, err := w.Write([]byte(*h.resURL + storage.Add(bodyString)))
+		resURL := flag.Lookup("b").Value.(flag.Getter).String()
+		_, err := w.Write([]byte(resURL + storage.Add(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
