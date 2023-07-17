@@ -10,7 +10,7 @@ import (
 
 func init() {
 	flag.String("a", "localhost:8080", "-a server address")
-	flag.String("b", "http://localhost:8080/", "-b result URL address")
+	flag.String("b", "http://localhost:8080", "-b result URL address")
 }
 
 func main() {
