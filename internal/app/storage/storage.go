@@ -13,7 +13,7 @@ var urlRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12345
 
 func Add(url string) string {
 	newURL := EncodedUrl{
-		Id:  generateRandomId(),
+		Id:  generateRandomID(),
 		URL: url,
 	}
 
@@ -42,7 +42,7 @@ func Get(id string) string {
 	return "InvalidURL!"
 }
 
-func generateRandomId() string {
+func generateRandomID() string {
 	b := make([]rune, 8)
 	for i := range b {
 		b[i] = urlRunes[rand.Intn(len(urlRunes))]
