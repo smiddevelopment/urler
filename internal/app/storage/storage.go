@@ -2,9 +2,9 @@ package storage
 
 import "math/rand"
 
-var EncodedUrls []EncodedUrl
+var EncodedURLs []EncodedURL
 
-type EncodedUrl struct {
+type EncodedURL struct {
 	Id  string
 	URL string
 }
@@ -12,33 +12,35 @@ type EncodedUrl struct {
 var urlRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
 func Add(url string) string {
-	newURL := EncodedUrl{
+	newURL := EncodedURL{
 		Id:  generateRandomID(),
 		URL: url,
 	}
 
-	if EncodedUrls == nil {
-		EncodedUrls = []EncodedUrl{newURL}
+	if EncodedURLs == nil {
+		EncodedURLs = []EncodedURL{newURL}
 
 		return newURL.Id
 	}
 
-	for i := 0; i < len(EncodedUrls); i++ {
-		if url == EncodedUrls[i].URL {
-			return EncodedUrls[i].Id
+	for i := 0; i < len(EncodedURLs); i++ {
+		if url == EncodedURLs[i].URL {
+			return EncodedURLs[i].Id
 		}
 	}
 
-	_ = append(EncodedUrls, newURL)
+	_ = append(EncodedURLs, newURL)
+
 	return newURL.Id
 }
 
 func Get(id string) string {
-	for i := 0; i < len(EncodedUrls); i++ {
-		if id == EncodedUrls[i].Id {
-			return EncodedUrls[i].URL
+	for i := 0; i < len(EncodedURLs); i++ {
+		if id == EncodedURLs[i].Id {
+			return EncodedURLs[i].URL
 		}
 	}
+
 	return "InvalidURL!"
 }
 
@@ -47,5 +49,6 @@ func generateRandomID() string {
 	for i := range b {
 		b[i] = urlRunes[rand.Intn(len(urlRunes))]
 	}
+
 	return string(b)
 }
