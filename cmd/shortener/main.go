@@ -2,31 +2,29 @@ package main
 
 import (
 	"flag"
+	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/go-chi/chi"
 	"github.com/smiddevelopment/urler.git/internal/app/handler"
 )
 
 var port, resUrl *string
 
 func init() {
-	port = flag.String("a", "8080", "-a is the server path")
-	resUrl = flag.String("b", "http://localhost:8080", "-b <base address result>")
+	port = flag.String("a", "localhost:8888", "-a server port")
+	resUrl = flag.String("b", "http://localhost:8080/", "-b result URL address")
 	flag.Parse()
 }
 
 func main() {
-	e := echo.New()
+	r := chi.NewRouter()
 
 	decodeHandler := handler.New(resUrl)
-	e.POST(`/`, decodeHandler.EncodeUrl)
-	e.GET(`/{id}`, decodeHandler.DecodeUrl)
+	r.Post("/", decodeHandler.EncodeURL)
+	r.Get("/{id}", handler.DecodeURL)
 
-	defaultPort := "5000"
-
-	if port != nil {
-		defaultPort = *port
+	err := http.ListenAndServe(*port, r)
+	if err != nil {
+		panic(err)
 	}
-
-	e.Logger.Fatal(e.Start(":" + defaultPort))
 }
