@@ -1,10 +1,11 @@
 package handler
 
 import (
-	"flag"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/smiddevelopment/urler.git/internal/app/config"
 
 	"github.com/smiddevelopment/urler.git/internal/app/storage"
 )
@@ -33,11 +34,7 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
 		// Получение значения ID из хранилища или добавление новой ссылки
-		resURL := "http://localhost:8080"
-		if flag.Lookup("b") != nil {
-			resURL = flag.Lookup("b").Value.(flag.Getter).String()
-		}
-		_, err := w.Write([]byte(resURL + "/" + storage.Add(bodyString)))
+		_, err := w.Write([]byte(config.NetAddress.ResURL + "/" + storage.Add(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
