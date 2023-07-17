@@ -5,23 +5,31 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/smiddevelopment/urler.git/internal/app/shortener"
+	"github.com/smiddevelopment/urler.git/internal/app/storage"
 )
 
-func EncodeUrl(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-
-		return
+// RouteURL обработка базового маршрута для распределения запросов на GET и POST
+func RouteURL(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		DecodeURL(w, r) // Запуск обработчика запроса GET
+	case http.MethodPost:
+		EncodeURL(w, r) // Запуск обработчика запроса POST
+	default:
+		http.Error(w, "Method not allowed!", http.StatusMethodNotAllowed)
 	}
+}
 
+// EncodeURL обработка запроса POST, кодирование ссылки
+func EncodeURL(w http.ResponseWriter, r *http.Request) {
+	// Чтение тела запроса
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
-
+	// Отложенное особождение памяти
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
@@ -35,7 +43,8 @@ func EncodeUrl(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
-		_, err := w.Write([]byte(shortener.EncodeString(bodyString)))
+		// Получение значения ID из хранилища или добавление новой ссылки
+		_, err := w.Write([]byte("http://localhost:8080/" + storage.Add(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
@@ -48,20 +57,17 @@ func EncodeUrl(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "body is empty!", http.StatusBadRequest)
 }
 
-func DecodeUrl(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+// DecodeURL обработка запроса GET, декодирование ссылки
+func DecodeURL(w http.ResponseWriter, r *http.Request) {
+	// Получение значения URL из хранилища, если найдено
+	resLink := storage.Get(strings.TrimPrefix(r.URL.Path, "/"))
+	if resLink != "" {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Location", resLink)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 
 		return
 	}
 
-	if r.URL.Path == "" {
-		http.Error(w, "id is empty!", http.StatusBadRequest)
-
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("Location", shortener.DecodeString(strings.TrimPrefix(r.URL.Path, "/")))
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	http.Error(w, "this Id invalid!", http.StatusBadRequest)
 }

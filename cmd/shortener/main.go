@@ -7,11 +7,12 @@ import (
 )
 
 func main() {
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, handler.EncodeUrl)
-	mux.HandleFunc(`/{id}`, handler.DecodeUrl)
+	mux := http.NewServeMux() // Инициализация объекта сервера
 
-	err := http.ListenAndServe(`:8080`, mux)
+	mux.HandleFunc(`/`, handler.RouteURL)     // Базовый маршрут
+	mux.HandleFunc(`/{id}`, handler.RouteURL) // Маршрут с параметром ссылки
+
+	err := http.ListenAndServe(`:8080`, mux) // Запуск сервера
 	if err != nil {
 		panic(err)
 	}

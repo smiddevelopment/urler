@@ -7,11 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/smiddevelopment/urler.git/internal/app/storage"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncodeUrlHandler(t *testing.T) {
+func TestRouteURLHandler(t *testing.T) {
 	type want struct {
 		code        int
 		response    string
@@ -25,7 +27,6 @@ func TestEncodeUrlHandler(t *testing.T) {
 			name: "encode url #1",
 			want: want{
 				code:        201,
-				response:    "EwHXdJfB",
 				contentType: "text/plain",
 			},
 		},
@@ -36,7 +37,7 @@ func TestEncodeUrlHandler(t *testing.T) {
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			EncodeUrl(w, request)
+			EncodeURL(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
@@ -45,7 +46,15 @@ func TestEncodeUrlHandler(t *testing.T) {
 			resBody, err := io.ReadAll(res.Body)
 
 			require.NoError(t, err)
-			assert.Equal(t, string(resBody), test.want.response)
+
+			if string(resBody) == "" {
+				t.Errorf("EncodeURL() = resBody is empty!")
+			}
+
+			if len(storage.EncodedURLs) == 0 {
+				t.Errorf("EncodedURLs is empty!")
+			}
+
 			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
 		})
 	}
@@ -62,21 +71,21 @@ func TestDecodeUrlHandler(t *testing.T) {
 		want want
 	}{
 		{
-			name: "decode url test #1",
+			name: "decode url #1",
 			want: want{
 				code:        307,
-				response:    "https://practicum.yandex.ru/",
+				response:    "Invalid ID!",
 				contentType: "text/plain",
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/EwHXdJfB", nil)
+			request := httptest.NewRequest(http.MethodGet, "/", nil)
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			DecodeUrl(w, request)
+			DecodeURL(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
@@ -86,6 +95,9 @@ func TestDecodeUrlHandler(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
+			if res.Header.Get("Location") == "" {
+				t.Errorf("There is no 'Location' header!")
+			}
 			assert.Equal(t, res.Header.Get("Location"), test.want.response)
 		})
 	}
