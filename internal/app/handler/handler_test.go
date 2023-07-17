@@ -40,22 +40,14 @@ func TestRouteURLHandler(t *testing.T) {
 			EncodeURL(w, request)
 
 			res := w.Result()
-			if err := res.Body.Close(); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
 			// проверяем код ответа
 			assert.Equal(t, res.StatusCode, test.want.code)
 			// получаем и проверяем тело запроса
 			resBody, err := io.ReadAll(res.Body)
-			//// Отложенное особождение памяти
-			//defer func(Body io.ReadCloser) {
-			//	err := Body.Close()
-			//	if err != nil {
-			//		http.Error(w, err.Error(), http.StatusInternalServerError)
-			//
-			//		return
-			//	}
-			//}(res.Body)
+			// Особождение памяти
+			if err := res.Body.Close(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 
 			require.NoError(t, err)
 
@@ -100,22 +92,14 @@ func TestDecodeUrlHandler(t *testing.T) {
 			DecodeURL(w, request)
 
 			res := w.Result()
-			if err := res.Body.Close(); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
 			// проверяем код ответа
 			assert.Equal(t, test.want.code, res.StatusCode)
 			// получаем и проверяем тело запроса
 			_, err := io.ReadAll(res.Body)
-			//// Отложенное особождение памяти
-			//defer func(Body io.ReadCloser) {
-			//	err := Body.Close()
-			//	if err != nil {
-			//		http.Error(w, err.Error(), http.StatusInternalServerError)
-			//
-			//		return
-			//	}
-			//}(res.Body)
+			// Особождение памяти
+			if err := res.Body.Close(); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 
 			require.NoError(t, err)
 			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
