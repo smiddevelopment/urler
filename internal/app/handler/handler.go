@@ -9,12 +9,12 @@ import (
 )
 
 type Handler struct {
-	resUrl *string
+	resURL *string
 }
 
-func New(resUrl *string) *Handler {
+func New(resURL *string) *Handler {
 	return &Handler{
-		resUrl: resUrl,
+		resURL: resURL,
 	}
 }
 
@@ -42,7 +42,7 @@ func (h *Handler) EncodeURL(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
 		// Получение значения ID из хранилища или добавление новой ссылки
-		_, err := w.Write([]byte(*h.resUrl + storage.Add(bodyString)))
+		_, err := w.Write([]byte(*h.resURL + storage.Add(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
