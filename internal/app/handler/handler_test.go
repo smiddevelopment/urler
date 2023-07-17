@@ -1,12 +1,13 @@
 package handler
 
 import (
-	"flag"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/smiddevelopment/urler.git/internal/app/config"
 
 	"github.com/smiddevelopment/urler.git/internal/app/storage"
 
@@ -34,10 +35,7 @@ func TestRouteURLHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			flag.String("a", "localhost:8080", "-a server address")
-			flag.String("b", "http://localhost:8080", "-b result URL address")
-			flag.Parse()
-
+			config.SetConfig()
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://practicum.yandex.ru/"))
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder

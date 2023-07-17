@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"flag"
-	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
+
+	"github.com/smiddevelopment/urler.git/internal/app/config"
 
 	"github.com/smiddevelopment/urler.git/internal/app/storage"
 )
@@ -35,20 +34,7 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "30")
 		w.WriteHeader(http.StatusCreated)
 		// Получение значения ID из хранилища или добавление новой ссылки
-		resURL, exist := os.LookupEnv("BASE_URL")
-		if exist {
-			fmt.Print(resURL)
-		}
-
-		if resURL == "" {
-			resURL = flag.Lookup("b").Value.(flag.Getter).String()
-		}
-
-		if resURL == "" {
-			resURL = "http://localhost:8080"
-		}
-
-		_, err := w.Write([]byte(resURL + "/" + storage.Add(bodyString)))
+		_, err := w.Write([]byte(config.NetAddress.ResURL + "/" + storage.Add(bodyString)))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 
