@@ -1,14 +1,20 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+
 	"github.com/smiddevelopment/urler.git/internal/app/handler"
 )
 
 func main() {
-	e := echo.New()
-	e.POST(`/`, handler.EncodeUrl)
-	e.GET(`/{id}`, handler.DecodeUrl)
+	r := chi.NewRouter()
+	r.Post("/", handler.EncodeURL)
+	r.Get("/{id}", handler.DecodeURL)
 
-	e.Logger.Fatal(e.Start(":8080"))
+	err := http.ListenAndServe(":8080", r)
+	if err != nil {
+		panic(err)
+	}
 }

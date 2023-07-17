@@ -5,46 +5,57 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/labstack/echo/v4"
-
-	"github.com/smiddevelopment/urler.git/internal/app/shortener"
+	"github.com/smiddevelopment/urler.git/internal/app/storage"
 )
 
-func EncodeUrl(c echo.Context) error {
-	body, err := io.ReadAll(c.Request().Body)
+// EncodeURL обработка запроса POST, кодирование ссылки
+func EncodeURL(w http.ResponseWriter, r *http.Request) {
+	// Чтение тела запроса
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Please enter valid body")
-	}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 
+		return
+	}
+	// Отложенное особождение памяти
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			c.Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 
 			return
 		}
-	}(c.Request().Body)
+	}(r.Body)
 	bodyString := string(body)
 	if bodyString != "" {
-		c.Response().Header().Set("Content-Type", "text/plain")
-		c.Response().Header().Set("Content-Length", "30")
-		c.Response().WriteHeader(http.StatusCreated)
-		_, err := c.Response().Write([]byte(shortener.EncodeString(bodyString)))
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Content-Length", "30")
+		w.WriteHeader(http.StatusCreated)
+		// Получение значения ID из хранилища или добавление новой ссылки
+		_, err := w.Write([]byte("http://localhost:8080/" + storage.Add(bodyString)))
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Please enter valid id")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
 		}
+
+		return
 	}
-	return echo.NewHTTPError(http.StatusBadRequest, "Please enter not empty body!")
+
+	http.Error(w, "body is empty!", http.StatusBadRequest)
 }
 
-func DecodeUrl(c echo.Context) error {
-	if c.Request().URL.Path == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Id is empty!")
+// DecodeURL обработка запроса GET, декодирование ссылки
+func DecodeURL(w http.ResponseWriter, r *http.Request) {
+	// Получение значения URL из хранилища, если найдено
+	resLink := storage.Get(strings.TrimPrefix(r.URL.Path, "/"))
+	if resLink != "" {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Location", resLink)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+
+		return
 	}
 
-	c.Response().Header().Set("Content-Type", "text/plain")
-	c.Response().Header().Set("Location", shortener.DecodeString(strings.TrimPrefix(c.Request().URL.Path, "/")))
-	c.Response().WriteHeader(http.StatusTemporaryRedirect)
-
-	return nil
+	http.Error(w, "this Id invalid!", http.StatusBadRequest)
 }
