@@ -20,7 +20,12 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Отложенное особождение памяти
-	//defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}(r.Body)
 	bodyString := string(body)
 	if bodyString != "" {
 		w.Header().Set("Content-Type", "text/plain")
