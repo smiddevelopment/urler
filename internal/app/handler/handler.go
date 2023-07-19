@@ -24,8 +24,9 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 
 	bodyString := string(body)
 	if bodyString != "" {
+		resURL := config.NetAddress.ResURL + "/" + storage.Add(bodyString)
 		w.Header().Set("Content-Type", "text/plain")
-		//w.Header().Set("Content-Length", "30")
+		w.Header().Set("Content-Length", string(len(resURL)))
 		w.WriteHeader(http.StatusCreated)
 		// Получение значения ID из хранилища или добавление новой ссылки
 		_, err := w.Write([]byte(config.NetAddress.ResURL + "/" + storage.Add(bodyString)))
