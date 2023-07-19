@@ -48,7 +48,14 @@ func TestRouteURLHandler(t *testing.T) {
 			// получаем и проверяем тело запроса
 			resBody, err := io.ReadAll(res.Body)
 			// Отложенное особождение памяти
-			defer res.Body.Close()
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+
+					return
+				}
+			}(res.Body)
 
 			require.NoError(t, err)
 

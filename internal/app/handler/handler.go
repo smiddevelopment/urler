@@ -21,7 +21,14 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Отложенное особождение памяти
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+
+			return
+		}
+	}(r.Body)
 
 	bodyString := string(body)
 	if bodyString != "" {
@@ -55,5 +62,5 @@ func DecodeURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Error(w, "this Id invalid!", http.StatusBadRequest)
+	http.Error(w, "this Id invalid!", http.StatusNotFound)
 }
