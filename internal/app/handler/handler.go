@@ -55,5 +55,5 @@ func DecodeURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Error(w, "this Id invalid!", http.StatusBadRequest)
+	http.Error(w, "this Id invalid!", http.StatusNotFound)
 }
