@@ -3,6 +3,7 @@ package handler
 import (
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/smiddevelopment/urler.git/internal/app/config"
@@ -26,7 +27,7 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 	if bodyString != "" {
 		resURL := config.NetAddress.ResURL + "/" + storage.Add(bodyString)
 		w.Header().Set("Content-Type", "text/plain")
-		w.Header().Set("Content-Length", string(len(resURL)))
+		w.Header().Set("Content-Length", strconv.Itoa(len([]rune(resURL))))
 		w.WriteHeader(http.StatusCreated)
 		// Получение значения ID из хранилища или добавление новой ссылки
 		_, err := w.Write([]byte(config.NetAddress.ResURL + "/" + storage.Add(bodyString)))
