@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/smiddevelopment/urler.git/internal/app/logger"
+
 	"github.com/go-chi/chi"
 	"github.com/smiddevelopment/urler.git/internal/app/config"
 	"github.com/smiddevelopment/urler.git/internal/app/handler"
@@ -10,11 +12,14 @@ import (
 
 func init() {
 	config.SetConfig()
+	logger.InitLog()
 }
 
 func main() {
+
 	r := chi.NewRouter()
 
+	r.Use(logger.WithLogging)
 	r.Post("/", handler.EncodeURL)
 	r.Get("/{id}", handler.DecodeURL)
 
