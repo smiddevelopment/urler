@@ -81,8 +81,7 @@ func TestEncodeURLJSONHandler(t *testing.T) {
 		want     want
 	}{
 		{
-			name:     "encode url #1",
-			sendJSON: "{\"url\":\"https://practicum.yandex.ru\"}",
+			name: "encode url #1",
 			want: want{
 				code:        201,
 				contentType: "application/json",
@@ -92,7 +91,8 @@ func TestEncodeURLJSONHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			config.SetConfig()
-			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer([]byte(test.sendJSON)))
+			var jsonStr = []byte(`{"url":"https://practicum.yandex.ru"}`)
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer(jsonStr))
 			request.Header.Add("Content-Type", "application/json")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
