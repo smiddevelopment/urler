@@ -22,6 +22,7 @@ func main() {
 	r.Use(logger.WithLogging)
 	r.Post("/", handler.EncodeURL)
 	r.Get("/{id}", handler.DecodeURL)
+	r.Post("/api/shorten", handler.EncodeURLJSON)
 
 	err := http.ListenAndServe(config.NetAddress.ServAddr, r)
 	if err != nil {

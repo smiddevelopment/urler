@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
@@ -41,6 +42,43 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "body is empty!", http.StatusBadRequest)
+}
+
+type URLEncoded struct {
+	URL    string `json:"url,omitempty"`
+	Result string `json:"result,omitempty"`
+}
+
+// EncodeURLJSON обработка запроса POST, кодирование ссылки
+func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
+	// Чтение тела запроса
+	var getURL URLEncoded
+	var sendURL URLEncoded
+
+	if err := json.NewDecoder(r.Body).Decode(&getURL); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+
+	}
+
+	// Отложенное особождение памяти
+	defer r.Body.Close()
+
+	sendURL.Result = config.NetAddress.ResURL + "/" + storage.Add(getURL.URL)
+	w.Header().Set("Content-Type", "application/json")
+	stringJSON, _ := json.Marshal(sendURL)
+	w.Header().Set("Content-Length", strconv.Itoa(len(string(stringJSON))+1))
+	w.WriteHeader(http.StatusCreated)
+
+	// Получение значения ID из хранилища или добавление новой ссылки
+	err := json.NewEncoder(w).Encode(sendURL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+
+	}
+
+	return
 }
 
 // DecodeURL обработка запроса GET, декодирование ссылки
