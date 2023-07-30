@@ -66,7 +66,13 @@ func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
 
 	sendURL.Result = config.NetAddress.ResURL + "/" + storage.Add(getURL.URL)
 	w.Header().Set("Content-Type", "application/json")
-	stringJSON, _ := json.Marshal(sendURL)
+	stringJSON, marshalErr := json.Marshal(sendURL)
+	if marshalErr != nil {
+		http.Error(w, marshalErr.Error(), http.StatusBadRequest)
+		return
+
+	}
+
 	w.Header().Set("Content-Length", strconv.Itoa(len(string(stringJSON))+1))
 	w.WriteHeader(http.StatusCreated)
 
