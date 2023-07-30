@@ -15,8 +15,16 @@ func InitLog() {
 	if err != nil {
 		// вызываем панику, если ошибка
 		panic(err)
+
 	}
-	defer logger.Sync()
+	defer func(logger *zap.Logger) {
+		err := logger.Sync()
+		if err != nil {
+			// вызываем панику, если ошибка
+			panic(err)
+
+		}
+	}(logger)
 
 	// делаем регистратор SugaredLogger
 	sugar = *logger.Sugar()
