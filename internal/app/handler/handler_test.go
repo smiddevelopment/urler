@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -75,11 +76,13 @@ func TestEncodeURLJSONHandler(t *testing.T) {
 		contentType string
 	}
 	tests := []struct {
-		name string
-		want want
+		name     string
+		sendJSON string
+		want     want
 	}{
 		{
-			name: "encode url #1",
+			name:     "encode url #1",
+			sendJSON: "{\"url\":\"https://practicum.yandex.ru\"}",
 			want: want{
 				code:        201,
 				contentType: "application/json",
@@ -89,7 +92,7 @@ func TestEncodeURLJSONHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			config.SetConfig()
-			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{\n\"url\":\"https://practicum.yandex.ru\"\n}"))
+			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer([]byte(test.sendJSON)))
 			request.Header.Add("Content-Type", "application/json")
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
