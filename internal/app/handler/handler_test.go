@@ -37,7 +37,6 @@ func TestEncodeURLHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//config.SetConfig()
 			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.URL))
 			request.Header.Add("Content-Type", "text/plain")
 			// создаём новый Recorder
@@ -89,7 +88,6 @@ func TestEncodeURLJSONHandler(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			//config.SetConfig()
 			request := httptest.NewRequest(http.MethodPost, "/api/shorten", bytes.NewBuffer([]byte(test.URL)))
 			request.Header.Add("Content-Type", "application/json")
 			// создаём новый Recorder
