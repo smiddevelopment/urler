@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -67,61 +68,59 @@ func TestEncodeURLHandler(t *testing.T) {
 	}
 }
 
-//func TestEncodeURLJSONHandler(t *testing.T) {
-//	type want struct {
-//		code        int
-//		response    string
-//		contentType string
-//	}
-//	tests := []struct {
-//		name     string
-//		sendJSON string
-//		want     want
-//	}{
-//		{
-//			name:     "encode url #1",
-//			sendJSON: "{\n\"url\":\"https://practicum.yandex.ru\"\n}",
-//			want: want{
-//				code:        201,
-//				contentType: "application/json",
-//			},
-//		},
-//	}
-//	for _, test := range tests {
-//		t.Run(test.name, func(t *testing.T) {
-//			config.SetConfig()
-//			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.sendJSON))
-//			request.Header.Add("Content-Type", "application/json")
-//			// создаём новый Recorder
-//			w := httptest.NewRecorder()
-//			EncodeURLJSON(w, request)
-//
-//			res := w.Result()
-//			// проверяем код ответа
-//			assert.Equal(t, res.StatusCode, test.want.code)
-//			// получаем и проверяем тело запроса
-//			var getURL URLEncoded
-//			if err := json.NewDecoder(res.Body).Decode(&getURL); err != nil {
-//				t.Errorf("NewDecoder() = " + err.Error())
-//				return
-//
-//			}
-//
-//			// Отложенное особождение памяти
-//			defer res.Body.Close()
-//
-//			if string(getURL.Result) == "" {
-//				t.Errorf("EncodeURLJSON() = resBody is empty!")
-//			}
-//
-//			if len(storage.EncodedURLs) == 0 {
-//				t.Errorf("EncodedURLs is empty!")
-//			}
-//
-//			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
-//		})
-//	}
-//}
+func TestEncodeURLJSONHandler(t *testing.T) {
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name string
+		want want
+	}{
+		{
+			name: "encode url #1",
+			want: want{
+				code:        201,
+				contentType: "application/json",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			config.SetConfig()
+			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("{\n\"url\":\"https://practicum.yandex.ru\"\n}"))
+			request.Header.Add("Content-Type", "application/json")
+			// создаём новый Recorder
+			w := httptest.NewRecorder()
+			EncodeURLJSON(w, request)
+
+			res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, res.StatusCode, test.want.code)
+			// получаем и проверяем тело запроса
+			var getURL URLEncoded
+			if err := json.NewDecoder(res.Body).Decode(&getURL); err != nil {
+				t.Errorf("NewDecoder() = " + err.Error())
+				return
+
+			}
+
+			// Отложенное особождение памяти
+			defer res.Body.Close()
+
+			if string(getURL.Result) == "" {
+				t.Errorf("EncodeURLJSON() = resBody is empty!")
+			}
+
+			if len(storage.EncodedURLs) == 0 {
+				t.Errorf("EncodedURLs is empty!")
+			}
+
+			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
+		})
+	}
+}
 
 func TestDecodeUrlHandler(t *testing.T) {
 	type want struct {
