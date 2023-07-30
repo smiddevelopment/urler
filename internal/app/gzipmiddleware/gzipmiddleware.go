@@ -1,4 +1,4 @@
-package gzipMiddleware
+package gzipmiddleware
 
 import (
 	"bytes"
