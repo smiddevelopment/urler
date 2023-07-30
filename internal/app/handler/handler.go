@@ -83,8 +83,6 @@ func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
 		return
 
 	}
-
-	return
 }
 
 // DecodeURL обработка запроса GET, декодирование ссылки
