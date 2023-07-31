@@ -2,12 +2,17 @@ package handler
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/go-chi/chi"
+	"github.com/smiddevelopment/urler.git/internal/app/gzipmiddleware"
 
 	"github.com/smiddevelopment/urler.git/internal/app/storage"
 
@@ -164,6 +169,90 @@ func TestDecodeUrlHandler(t *testing.T) {
 				t.Errorf("There is no 'Location' header!")
 			}
 			assert.Equal(t, res.Header.Get("Location"), test.want.response)
+		})
+	}
+}
+
+func TestIntegralGZIPEncodeURLJSONHandler(t *testing.T) {
+	type want struct {
+		code        int
+		response    string
+		contentType string
+	}
+	tests := []struct {
+		name string
+		URL  string
+		want want
+	}{
+		{
+			name: "encode url #1",
+			URL:  `{"url":"https://practicum.yandex.ru"}`,
+			want: want{
+				code:        201,
+				contentType: "application/json",
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+
+			var b = []byte(test.URL)
+			var buf bytes.Buffer
+			gz, err := gzip.NewWriterLevel(&buf, gzip.BestSpeed)
+			if err != nil {
+				_, _ = io.WriteString(gz, err.Error())
+				return
+
+			}
+			if _, err = gz.Write(b); err != nil {
+				log.Fatal(err)
+				return
+			}
+			_ = gz.Flush()
+			defer gz.Close()
+
+			r := chi.NewRouter()
+			r.Use(gzipmiddleware.GzipMiddleware)
+			r.Post("/api/shorten", EncodeURLJSON)
+
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			request, _ := http.NewRequest(http.MethodPost, ts.URL+"/api/shorten", &buf)
+			request.Header.Set("Content-Type", "application/json")
+			request.Header.Set("Accept-Encoding", "gzip")
+			request.Header.Set("Content-Encoding", "gzip")
+			// создаём новый Recorder
+			//w := httptest.NewRecorder()
+
+			res, err := http.DefaultClient.Do(request)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			//res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, res.StatusCode, test.want.code)
+			// получаем и проверяем тело запроса
+			var getURL URLEncoded
+			if err := json.NewDecoder(res.Body).Decode(&getURL); err != nil {
+				t.Errorf("NewDecoder() = " + err.Error())
+				return
+
+			}
+
+			// Отложенное особождение памяти
+			defer res.Body.Close()
+
+			if string(getURL.Result) == "" {
+				t.Errorf("EncodeURLJSON() = resBody is empty!")
+			}
+
+			if len(storage.EncodedURLs) == 0 {
+				t.Errorf("EncodedURLs is empty!")
+			}
+
+			assert.Equal(t, res.Header.Get("Content-Type"), test.want.contentType)
 		})
 	}
 }

@@ -30,7 +30,7 @@ func GzipMiddleware(next http.Handler) http.Handler {
 
 		}
 
-		if !slices.Contains(r.Header.Values("Content-Encoding"), "gzip") {
+		if slices.Contains(r.Header.Values("Content-Encoding"), "gzip") {
 			gz, err := gzip.NewReader(r.Body)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -38,14 +38,9 @@ func GzipMiddleware(next http.Handler) http.Handler {
 
 			}
 
+			body, _ := io.ReadAll(gz)
+
 			defer gz.Close()
-
-			body, err := io.ReadAll(gz)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-
-			}
 
 			r.Body = io.NopCloser(bytes.NewReader(body))
 			next.ServeHTTP(w, r)
@@ -58,7 +53,7 @@ func GzipMiddleware(next http.Handler) http.Handler {
 			return
 
 		}
-
+		_ = gz.Flush()
 		defer gz.Close()
 
 		w.Header().Set("Content-Encoding", "gzip")
