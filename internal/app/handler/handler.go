@@ -26,7 +26,7 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 
 	bodyString := string(body)
 	if bodyString != "" {
-		resURL := config.NetAddress.ResURL + "/" + storage.Add(bodyString)
+		resURL := config.ServerConfig.ResURL + "/" + storage.Add(bodyString)
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", strconv.Itoa(len([]rune(resURL))))
 		w.WriteHeader(http.StatusCreated)
@@ -44,16 +44,11 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "body is empty!", http.StatusBadRequest)
 }
 
-type URLEncoded struct {
-	URL    string `json:"url,omitempty"`
-	Result string `json:"result,omitempty"`
-}
-
 // EncodeURLJSON обработка запроса POST, кодирование ссылки
 func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
 	// Чтение тела запроса
-	var getURL URLEncoded
-	var sendURL URLEncoded
+	var getURL storage.URLEncoded
+	var sendURL storage.URLEncoded
 
 	if err := json.NewDecoder(r.Body).Decode(&getURL); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -64,7 +59,7 @@ func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
 	// Отложенное особождение памяти
 	defer r.Body.Close()
 
-	sendURL.Result = config.NetAddress.ResURL + "/" + storage.Add(getURL.URL)
+	sendURL.Result = config.ServerConfig.ResURL + "/" + storage.Add(getURL.URL)
 	w.Header().Set("Content-Type", "application/json")
 	stringJSON, marshalErr := json.Marshal(sendURL)
 	if marshalErr != nil {

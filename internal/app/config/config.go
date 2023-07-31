@@ -5,38 +5,50 @@ import (
 	"os"
 )
 
-type netAddress struct {
+type serverConfig struct {
 	ServAddr string
 	ResURL   string
+	URLFile  string
 }
 
-var NetAddress netAddress
+var ServerConfig serverConfig
 
 func SetConfig() {
 	flag.String("a", "localhost:8080", "-a server address")
 	flag.String("b", "http://localhost:8080", "-b result URL address")
+	pwd, _ := os.Getwd()
+	flag.String("f", pwd+"/cmd/shortener/short-url-db.json", "-b urls file db")
 	flag.Parse()
 
-	NetAddress = netAddress{
+	ServerConfig = serverConfig{
 		ServAddr: "localhost:8080",
 		ResURL:   "http://localhost:8080",
 	}
 
 	if flag.Lookup("a") != nil {
-		NetAddress.ServAddr = flag.Lookup("a").Value.(flag.Getter).String()
+		ServerConfig.ServAddr = flag.Lookup("a").Value.(flag.Getter).String()
 	}
 
 	if flag.Lookup("b") != nil {
-		NetAddress.ResURL = flag.Lookup("b").Value.(flag.Getter).String()
+		ServerConfig.ResURL = flag.Lookup("b").Value.(flag.Getter).String()
+	}
+
+	if flag.Lookup("f") != nil {
+		ServerConfig.URLFile = flag.Lookup("f").Value.(flag.Getter).String()
 	}
 
 	servURL, exist := os.LookupEnv("SERVER_ADDRESS")
 	if exist {
-		NetAddress.ServAddr = servURL
+		ServerConfig.ServAddr = servURL
 	}
 
 	resURL, exist := os.LookupEnv("BASE_URL")
 	if exist {
-		NetAddress.ResURL = resURL
+		ServerConfig.ResURL = resURL
+	}
+
+	uRLFile, exist := os.LookupEnv("FILE_STORAGE_PATH")
+	if exist {
+		ServerConfig.URLFile = uRLFile
 	}
 }

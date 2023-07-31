@@ -103,7 +103,7 @@ func TestEncodeURLJSONHandler(t *testing.T) {
 			// проверяем код ответа
 			assert.Equal(t, res.StatusCode, test.want.code)
 			// получаем и проверяем тело запроса
-			var getURL URLEncoded
+			var getURL storage.URLEncoded
 			if err := json.NewDecoder(res.Body).Decode(&getURL); err != nil {
 				t.Errorf("NewDecoder() = " + err.Error())
 				return
@@ -234,7 +234,7 @@ func TestIntegralGZIPEncodeURLJSONHandler(t *testing.T) {
 			// проверяем код ответа
 			assert.Equal(t, res.StatusCode, test.want.code)
 			// получаем и проверяем тело запроса
-			var getURL URLEncoded
+			var getURL storage.URLEncoded
 			if err := json.NewDecoder(res.Body).Decode(&getURL); err != nil {
 				t.Errorf("NewDecoder() = " + err.Error())
 				return

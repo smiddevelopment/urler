@@ -3,6 +3,8 @@ package main
 import (
 	"net/http"
 
+	"github.com/smiddevelopment/urler.git/internal/app/storage"
+
 	"github.com/smiddevelopment/urler.git/internal/app/gzipmiddleware"
 
 	"github.com/smiddevelopment/urler.git/internal/app/logger"
@@ -15,6 +17,7 @@ import (
 func init() {
 	config.SetConfig()
 	logger.InitLog()
+	storage.InitDB()
 }
 
 func main() {
@@ -27,7 +30,7 @@ func main() {
 	r.Get("/{id}", handler.DecodeURL)
 	r.Post("/api/shorten", handler.EncodeURLJSON)
 
-	err := http.ListenAndServe(config.NetAddress.ServAddr, r)
+	err := http.ListenAndServe(config.ServerConfig.ServAddr, r)
 	if err != nil {
 		panic(err)
 	}
