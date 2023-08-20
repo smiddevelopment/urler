@@ -101,12 +101,10 @@ func DecodeURL(w http.ResponseWriter, r *http.Request) {
 // PingDB проверка подключения к базе данных
 func PingDB(w http.ResponseWriter, r *http.Request) {
 	// Попытка установить соединение с базой данных
-	db, err := sql.Open("pgx", config.ServerConfig.DbURL)
+	db, err := sql.Open("pgx", config.ServerConfig.DBURL)
 	if err != nil {
 		http.Error(w, "Can't connect to database!", http.StatusInternalServerError)
 	}
 	defer db.Close()
 	w.WriteHeader(http.StatusOK)
-
-	return
 }

@@ -9,7 +9,7 @@ type serverConfig struct {
 	ServAddr string
 	ResURL   string
 	URLFile  string
-	DbURL    string
+	DBURL    string
 }
 
 var ServerConfig serverConfig
@@ -40,7 +40,7 @@ func SetConfig() {
 	}
 
 	if flag.Lookup("d") != nil {
-		ServerConfig.DbURL = flag.Lookup("d").Value.(flag.Getter).String()
+		ServerConfig.DBURL = flag.Lookup("d").Value.(flag.Getter).String()
 	}
 
 	servURL, exist := os.LookupEnv("SERVER_ADDRESS")
@@ -60,6 +60,6 @@ func SetConfig() {
 
 	dbURL, exist := os.LookupEnv("DATABASE_DSN")
 	if exist {
-		ServerConfig.DbURL = dbURL
+		ServerConfig.DBURL = dbURL
 	}
 }
