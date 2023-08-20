@@ -9,6 +9,7 @@ type serverConfig struct {
 	ServAddr string
 	ResURL   string
 	URLFile  string
+	DbURL    string
 }
 
 var ServerConfig serverConfig
@@ -17,7 +18,8 @@ func SetConfig() {
 	flag.String("a", "localhost:8080", "-a server address")
 	flag.String("b", "http://localhost:8080", "-b result URL address")
 	pwd, _ := os.Getwd()
-	flag.String("f", pwd+"/cmd/shortener/short-url-db.json", "-b urls file db")
+	flag.String("f", pwd+"/cmd/shortener/short-url-db.json", "-f urls file db")
+	flag.String("d", "host=jdbc:postgresql://ep-round-sea-739368.eu-central-1.aws.neon.tech/gotest user=smiddevelopment password=d5mvZQ2CTDYs dbname=gotest sslmode=disable", "-d url to db")
 	flag.Parse()
 
 	ServerConfig = serverConfig{
@@ -37,6 +39,10 @@ func SetConfig() {
 		ServerConfig.URLFile = flag.Lookup("f").Value.(flag.Getter).String()
 	}
 
+	if flag.Lookup("d") != nil {
+		ServerConfig.DbURL = flag.Lookup("d").Value.(flag.Getter).String()
+	}
+
 	servURL, exist := os.LookupEnv("SERVER_ADDRESS")
 	if exist {
 		ServerConfig.ServAddr = servURL
@@ -50,5 +56,10 @@ func SetConfig() {
 	uRLFile, exist := os.LookupEnv("FILE_STORAGE_PATH")
 	if exist {
 		ServerConfig.URLFile = uRLFile
+	}
+
+	dbURL, exist := os.LookupEnv("DATABASE_DSN")
+	if exist {
+		ServerConfig.DbURL = dbURL
 	}
 }

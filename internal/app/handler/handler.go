@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/smiddevelopment/urler.git/internal/app/config"
 
@@ -93,4 +96,17 @@ func DecodeURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "this Id invalid!", http.StatusNotFound)
+}
+
+// PingDB проверка подключения к базе данных
+func PingDB(w http.ResponseWriter, r *http.Request) {
+	// Попытка установить соединение с базой данных
+	db, err := sql.Open("pgx", config.ServerConfig.DbURL)
+	if err != nil {
+		http.Error(w, "Can't connect to database!", http.StatusInternalServerError)
+	}
+	defer db.Close()
+	w.WriteHeader(http.StatusOK)
+
+	return
 }

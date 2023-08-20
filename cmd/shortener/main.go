@@ -29,6 +29,7 @@ func main() {
 	r.Post("/", handler.EncodeURL)
 	r.Get("/{id}", handler.DecodeURL)
 	r.Post("/api/shorten", handler.EncodeURLJSON)
+	r.Get("/ping", handler.PingDB)
 
 	err := http.ListenAndServe(config.ServerConfig.ServAddr, r)
 	if err != nil {

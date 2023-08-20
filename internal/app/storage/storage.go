@@ -12,16 +12,6 @@ import (
 // EncodedURLs хранилище структур ссылок
 var EncodedURLs []URLEncoded
 
-//// Database хранилище структур ссылок
-//type Database struct {
-//	EncodedURLs []URLEncoded
-//}
-//
-//func (box *Database) AddItem(item URLEncoded) []URLEncoded {
-//	box.EncodedURLs = append(box.EncodedURLs, item)
-//	return box.EncodedURLs
-//}
-
 // URLEncoded структура для хранения ссылки
 type URLEncoded struct {
 	URL    string `json:"url,omitempty"`
