@@ -19,7 +19,7 @@ func SetConfig() {
 	flag.String("b", "http://localhost:8080", "-b result URL address")
 	pwd, _ := os.Getwd()
 	flag.String("f", pwd+"/cmd/shortener/short-url-db.json", "-f urls file db")
-	flag.String("d", "host=jdbc:postgresql://ep-round-sea-739368.eu-central-1.aws.neon.tech/gotest user=smiddevelopment password=d5mvZQ2CTDYs dbname=gotest sslmode=disable", "-d url to db")
+	flag.String("d", "user=smiddevelopment password=d5mvZQ2CTDYs dbname=gotest host=ep-round-sea-739368.eu-central-1.aws.neon.tech sslmode=verify-full", "-d url to db")
 	flag.Parse()
 
 	ServerConfig = serverConfig{

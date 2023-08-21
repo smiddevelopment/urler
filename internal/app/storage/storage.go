@@ -2,6 +2,8 @@ package storage
 
 import (
 	"bufio"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"math/rand"
 	"os"
@@ -21,29 +23,54 @@ type URLEncoded struct {
 // Массив для генерации ID ссылок
 var urlRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
-// InitDB инициализация и чтение хранилища
-func InitDB() {
-	r, _ := newReadURL()
-	r.scanner.Scan()
-	if len(r.scanner.Bytes()) > 0 {
-		err := json.Unmarshal(r.scanner.Bytes(), &EncodedURLs)
+// InitStore инициализация хранилищ
+func InitStore() {
+	if config.ServerConfig.DBURL != "" {
+		err := createTableInDB()
 		if err != nil {
 			panic(err)
-
 		}
 	}
+
 }
 
-// Add добавление новой ссылки или поиск существующей по URL
+// Add проверка наличия и добавление новой ссылки
 func Add(url string) string {
 	if url == "" {
 		return "Invalid URL!"
 	}
 
-	// Поиск существующей ссылки по URL в массиве
-	for i := 0; i < len(EncodedURLs); i++ {
-		if url == EncodedURLs[i].URL {
-			return EncodedURLs[i].Result
+	// Поиск существующей ссылки по URL в базе данных, файле или массиве оперативной памяти
+	if config.ServerConfig.DBURL != "" {
+		var res = getIdFromDB(url)
+		if res != "" {
+			return res
+		}
+	} else if config.ServerConfig.URLFile != "" {
+		var URLsInFile []URLEncoded
+		r, _ := newReadURL()
+		r.scanner.Scan()
+
+		if len(r.scanner.Bytes()) > 0 {
+			err := json.Unmarshal(r.scanner.Bytes(), &URLsInFile)
+			if err != nil {
+				panic(err)
+
+			}
+
+			for i := 0; i < len(URLsInFile); i++ {
+				if url == URLsInFile[i].URL {
+					return URLsInFile[i].Result
+				}
+			}
+
+		}
+	} else {
+		// Поиск существующей ссылки по URL в массиве оперативной памяти
+		for i := 0; i < len(EncodedURLs); i++ {
+			if url == EncodedURLs[i].URL {
+				return EncodedURLs[i].Result
+			}
 		}
 	}
 
@@ -52,26 +79,75 @@ func Add(url string) string {
 		URL:    url,
 	}
 	// Добавление новой ссылки, если она не была найдена ранее
-	EncodedURLs = append(EncodedURLs, newURL)
-	w, err := newWriteURL()
-	if err != nil {
-		return err.Error()
+	if config.ServerConfig.DBURL != "" {
+		err := addURLToDB(newURL)
+		if err != nil {
+			return "Can't add url to database!"
+		}
+	} else if config.ServerConfig.URLFile != "" {
+		var URLsInFile []URLEncoded
+		r, _ := newReadURL()
+		r.scanner.Scan()
+
+		if len(r.scanner.Bytes()) > 0 {
+			err := json.Unmarshal(r.scanner.Bytes(), &URLsInFile)
+			if err != nil {
+				panic(err)
+
+			}
+
+		}
+		URLsInFile = append(URLsInFile, newURL)
+
+		w, err := newWriteURL()
+		if err != nil {
+			return err.Error()
+		}
+		byteURL, err := json.Marshal(URLsInFile)
+		if err != nil {
+			return err.Error()
+		}
+		w.writer.Write(byteURL)
+		w.writer.Flush()
+	} else {
+		EncodedURLs = append(EncodedURLs, newURL)
 	}
-	byteURL, err := json.Marshal(EncodedURLs)
-	if err != nil {
-		return err.Error()
-	}
-	w.writer.Write(byteURL)
-	w.writer.Flush()
+
 	return newURL.Result
 }
 
-// Get поиск существующей в хранилище ссылки по ID
+// Get поиск существующей ссылки по ID
 func Get(id string) string {
-	// Поиск существующей ссылки по ID в массиве
-	for i := 0; i < len(EncodedURLs); i++ {
-		if id == EncodedURLs[i].Result {
-			return EncodedURLs[i].URL
+	if config.ServerConfig.DBURL != "" {
+		var res = getURLFromDB(id)
+		if res != "" {
+			return res
+		}
+	} else if config.ServerConfig.URLFile != "" {
+		var URLsInFile []URLEncoded
+		r, _ := newReadURL()
+		r.scanner.Scan()
+
+		if len(r.scanner.Bytes()) > 0 {
+			err := json.Unmarshal(r.scanner.Bytes(), &URLsInFile)
+			if err != nil {
+				panic(err)
+
+			}
+
+			for i := 0; i < len(URLsInFile); i++ {
+				if id == URLsInFile[i].Result {
+					return URLsInFile[i].URL
+				}
+			}
+
+		}
+	} else {
+		// Поиск существующей ссылки по URL в массиве оперативной памяти
+		for i := 0; i < len(EncodedURLs); i++ {
+			if id == EncodedURLs[i].Result {
+				return EncodedURLs[i].URL
+			}
 		}
 	}
 
@@ -87,6 +163,8 @@ func generateRandomID() string {
 
 	return string(b)
 }
+
+// region LocalFile
 
 type readURL struct {
 	file *os.File
@@ -171,3 +249,93 @@ func (p *writeURL) Close() error {
 	// закрываем файл
 	return p.file.Close()
 }
+
+// endregion LocalFile
+
+// region DataBase
+
+func createTableInDB() error {
+	db, err := sql.Open("postgres", config.ServerConfig.DBURL)
+	if err != nil {
+		return err
+	}
+
+	defer db.Close()
+
+	_, errC := db.ExecContext(
+		context.Background(),
+		`CREATE TABLE IF NOT EXISTS urls (url VARCHAR (255) UNIQUE NOT NULL, result VARCHAR (255) UNIQUE NOT NULL)`,
+	)
+
+	if errC != nil {
+		return errC
+	}
+
+	return nil
+}
+
+func addURLToDB(urls URLEncoded) error {
+	db, err := sql.Open("postgres", config.ServerConfig.DBURL)
+	if err != nil {
+		return err
+	}
+
+	defer db.Close()
+
+	_, err = db.ExecContext(context.Background(),
+		`INSERT INTO urls (url, result) VALUES ($1,$2)`, urls.URL, urls.Result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func getIdFromDB(URLOrigin string) string {
+	var result string
+
+	if URLOrigin != "" {
+		db, err := sql.Open("postgres", config.ServerConfig.DBURL)
+		if err != nil {
+			panic(err)
+		}
+
+		defer db.Close()
+
+		row := db.QueryRowContext(context.Background(),
+			`SELECT result FROM urls WHERE url = $1 LIMIT 1`, URLOrigin)
+		// готовим переменную для чтения результата
+		err = row.Scan(&result) // разбираем результат
+		if err != nil {
+			return result
+		}
+
+	}
+
+	return result
+}
+
+func getURLFromDB(URLId string) string {
+	var result string
+
+	if URLId != "" {
+		db, err := sql.Open("postgres", config.ServerConfig.DBURL)
+		if err != nil {
+			panic(err)
+		}
+
+		defer db.Close()
+
+		row := db.QueryRowContext(context.Background(),
+			`SELECT url FROM urls WHERE result = $1 LIMIT 1`, URLId)
+		// готовим переменную для чтения результата
+		err = row.Scan(&result) // разбираем результат
+		if err != nil {
+			return result
+		}
+
+	}
+
+	return result
+}
+
+// endregion DataBase

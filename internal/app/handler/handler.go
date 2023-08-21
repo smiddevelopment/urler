@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/lib/pq"
 
 	"github.com/smiddevelopment/urler.git/internal/app/config"
 
@@ -99,12 +99,16 @@ func DecodeURL(w http.ResponseWriter, r *http.Request) {
 }
 
 // PingDB проверка подключения к базе данных
-func PingDB(w http.ResponseWriter, r *http.Request) {
+func PingDB(w http.ResponseWriter, _ *http.Request) {
 	// Попытка установить соединение с базой данных
-	db, err := sql.Open("pgx", config.ServerConfig.DBURL)
+	db, err := sql.Open("postgres", config.ServerConfig.DBURL)
 	if err != nil {
 		http.Error(w, "Can't connect to database!", http.StatusInternalServerError)
 	}
 	defer db.Close()
+	err = db.Ping()
+	if err != nil {
+		http.Error(w, "Can't connect to database!", http.StatusInternalServerError)
+	}
 	w.WriteHeader(http.StatusOK)
 }

@@ -17,7 +17,7 @@ import (
 func init() {
 	config.SetConfig()
 	logger.InitLog()
-	storage.InitDB()
+	storage.InitStore()
 }
 
 func main() {
