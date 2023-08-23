@@ -28,8 +28,8 @@ func main() {
 	r.Use(gzipmiddleware.GzipMiddleware)
 	r.Post("/", handler.EncodeURL)
 	r.Get("/{id}", handler.DecodeURL)
-	r.Post("/api/shorten", handler.EncodeURLJSON)
 	r.Get("/ping", handler.PingDB)
+	r.Post("/api/shorten", handler.EncodeURLJSON)
 	r.Post("/api/shorten/batch", handler.EncodeURLJSONBatch)
 
 	err := http.ListenAndServe(config.ServerConfig.ServAddr, r)

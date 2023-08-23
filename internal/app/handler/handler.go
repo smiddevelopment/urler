@@ -29,10 +29,15 @@ func EncodeURL(w http.ResponseWriter, r *http.Request) {
 
 	bodyString := string(body)
 	if bodyString != "" {
-		resURL := config.ServerConfig.ResURL + "/" + storage.Add(bodyString)
+		var res = storage.Add(bodyString)
+		resURL := config.ServerConfig.ResURL + "/" + res.Message
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Content-Length", strconv.Itoa(len([]rune(resURL))))
-		w.WriteHeader(http.StatusCreated)
+		if res.Existed {
+			w.WriteHeader(http.StatusConflict)
+		} else {
+			w.WriteHeader(http.StatusCreated)
+		}
 		// Получение значения ID из хранилища или добавление новой ссылки
 		_, err := w.Write([]byte(resURL))
 		if err != nil {
@@ -62,7 +67,8 @@ func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
 	// Отложенное особождение памяти
 	defer r.Body.Close()
 
-	sendURL.Result = config.ServerConfig.ResURL + "/" + storage.Add(getURL.URL)
+	var res = storage.Add(getURL.URL)
+	sendURL.Result = config.ServerConfig.ResURL + "/" + res.Message
 	w.Header().Set("Content-Type", "application/json")
 	stringJSON, marshalErr := json.Marshal(sendURL)
 	if marshalErr != nil {
@@ -72,7 +78,11 @@ func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Length", strconv.Itoa(len(string(stringJSON))+1))
-	w.WriteHeader(http.StatusCreated)
+	if res.Existed {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 
 	// Получение значения ID из хранилища или добавление новой ссылки
 	err := json.NewEncoder(w).Encode(sendURL)

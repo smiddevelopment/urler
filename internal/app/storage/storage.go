@@ -30,6 +30,11 @@ type URLArrayOutgoing struct {
 	Short string `json:"short_url,omitempty"`
 }
 
+type URLAddResult struct {
+	Message string
+	Existed bool
+}
+
 // Массив для генерации ID ссылок
 var urlRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
@@ -45,16 +50,16 @@ func InitStore() {
 }
 
 // Add проверка наличия и добавление новой ссылки
-func Add(url string) string {
+func Add(url string) URLAddResult {
 	if url == "" {
-		return "Invalid URL!"
+		return URLAddResult{"Invalid URL!", false}
 	}
 
 	// Поиск существующей ссылки по URL в базе данных, файле или массиве оперативной памяти
 	if config.ServerConfig.DBURL != "" {
 		var res = getIDFromDB(url)
 		if res != "" {
-			return res
+			return URLAddResult{res, true}
 		}
 	} else if config.ServerConfig.URLFile != "" {
 		var URLsInFile []URLEncoded
@@ -70,7 +75,7 @@ func Add(url string) string {
 
 			for i := 0; i < len(URLsInFile); i++ {
 				if url == URLsInFile[i].URL {
-					return URLsInFile[i].Result
+					return URLAddResult{URLsInFile[i].Result, true}
 				}
 			}
 
@@ -79,7 +84,7 @@ func Add(url string) string {
 		// Поиск существующей ссылки по URL в массиве оперативной памяти
 		for i := 0; i < len(EncodedURLs); i++ {
 			if url == EncodedURLs[i].URL {
-				return EncodedURLs[i].Result
+				return URLAddResult{EncodedURLs[i].Result, true}
 			}
 		}
 	}
@@ -92,7 +97,7 @@ func Add(url string) string {
 	if config.ServerConfig.DBURL != "" {
 		err := addURLToDB(newURL)
 		if err != nil {
-			return "Can't add url to database!"
+			return URLAddResult{"Can't add url to database!", false}
 		}
 	} else if config.ServerConfig.URLFile != "" {
 		var URLsInFile []URLEncoded
@@ -111,11 +116,11 @@ func Add(url string) string {
 
 		w, err := newWriteURL()
 		if err != nil {
-			return err.Error()
+			panic(err)
 		}
 		byteURL, err := json.Marshal(URLsInFile)
 		if err != nil {
-			return err.Error()
+			panic(err)
 		}
 		w.writer.Write(byteURL)
 		w.writer.Flush()
@@ -123,7 +128,7 @@ func Add(url string) string {
 		EncodedURLs = append(EncodedURLs, newURL)
 	}
 
-	return newURL.Result
+	return URLAddResult{newURL.Result, false}
 }
 
 // AddRange проверка наличия и добавление новой ссылки
