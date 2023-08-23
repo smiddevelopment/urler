@@ -83,6 +83,68 @@ func EncodeURLJSON(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// EncodeURLJSONBatch обработка запроса POST, кодирование ссылки
+func EncodeURLJSONBatch(w http.ResponseWriter, r *http.Request) {
+	// Чтение тела запроса
+	var URLInc []storage.URLArrayIncoming
+
+	if err := json.NewDecoder(r.Body).Decode(&URLInc); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+
+	}
+
+	// Отложенное особождение памяти
+	defer r.Body.Close()
+
+	var sendURLs = storage.AddRange(URLInc)
+	if len(sendURLs) > 0 {
+		w.Header().Set("Content-Type", "application/json")
+
+		stringJSONs, marshalErr := json.Marshal(sendURLs)
+		if marshalErr != nil {
+			http.Error(w, marshalErr.Error(), http.StatusBadRequest)
+			return
+
+		}
+
+		w.Header().Set("Content-Length", strconv.Itoa(len(string(stringJSONs))+1))
+		w.WriteHeader(http.StatusCreated)
+
+		// Получение значения ID из хранилища или добавление новой ссылки
+		err := json.NewEncoder(w).Encode(sendURLs)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+
+		}
+
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+	return
+
+	//w.Header().Set("Content-Type", "application/json")
+	//stringJSON, marshalErr := json.Marshal(sendURLs)
+	//if marshalErr != nil {
+	//	http.Error(w, marshalErr.Error(), http.StatusBadRequest)
+	//	return
+	//
+	//}
+	//
+	//w.Header().Set("Content-Length", strconv.Itoa(len(string(stringJSON))+1))
+	//w.WriteHeader(http.StatusCreated)
+	//
+	//// Получение значения ID из хранилища или добавление новой ссылки
+	//err := json.NewEncoder(w).Encode(sendURLs)
+	//if err != nil {
+	//	http.Error(w, err.Error(), http.StatusBadRequest)
+	//	return
+	//
+	//}
+}
+
 // DecodeURL обработка запроса GET, декодирование ссылки
 func DecodeURL(w http.ResponseWriter, r *http.Request) {
 	// Получение значения URL из хранилища, если найдено

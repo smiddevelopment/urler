@@ -20,6 +20,16 @@ type URLEncoded struct {
 	Result string `json:"result,omitempty"`
 }
 
+type URLArrayIncoming struct {
+	Id  string `json:"correlation_id,omitempty"`
+	URL string `json:"original_url,omitempty"`
+}
+
+type URLArrayOutgoing struct {
+	Id    string `json:"correlation_id,omitempty"`
+	Short string `json:"short_url,omitempty"`
+}
+
 // Массив для генерации ID ссылок
 var urlRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
@@ -114,6 +124,139 @@ func Add(url string) string {
 	}
 
 	return newURL.Result
+}
+
+// AddRange проверка наличия и добавление новой ссылки
+func AddRange(urls []URLArrayIncoming) []URLArrayOutgoing {
+	var res []URLArrayOutgoing
+	if len(urls) > 0 {
+		if config.ServerConfig.DBURL != "" {
+			db, err := sql.Open("postgres", config.ServerConfig.DBURL)
+			if err != nil {
+				panic(err)
+			}
+
+			var URLsToAdd []URLEncoded
+			for i := 0; i < len(urls); i++ {
+				var temp URLArrayOutgoing
+				temp.Id = urls[i].Id
+
+				var result string
+				row := db.QueryRowContext(context.Background(),
+					`SELECT result FROM urls WHERE url = $1 LIMIT 1`, urls[i].URL)
+				// готовим переменную для чтения результата
+				err = row.Scan(&result) // разбираем результат
+				if err != nil {
+					newURL := URLEncoded{
+						Result: generateRandomID(),
+						URL:    urls[i].URL,
+					}
+					URLsToAdd = append(URLsToAdd, newURL)
+					temp.Short = config.ServerConfig.ResURL + "/" + newURL.Result
+				} else {
+					temp.Short = config.ServerConfig.ResURL + "/" + result
+				}
+				res = append(res, temp)
+			}
+
+			if len(URLsToAdd) > 0 {
+				tx, errT := db.Begin()
+				if errT != nil {
+					panic(errT)
+				}
+
+				for _, v := range URLsToAdd {
+					// все изменения записываются в транзакцию
+					_, errC := tx.ExecContext(context.Background(),
+						`INSERT INTO urls (url, result) VALUES ($1,$2)`, v.URL, v.Result)
+					if errC != nil {
+						// если ошибка, то откатываем изменения
+						errC = tx.Rollback()
+						if errC != nil {
+							panic(errC)
+						}
+					}
+				}
+
+				errCommit := tx.Commit()
+				if errCommit != nil {
+					panic(errCommit)
+				}
+			}
+		} else if config.ServerConfig.URLFile != "" {
+			var URLsInFile []URLEncoded
+			r, _ := newReadURL()
+			r.scanner.Scan()
+
+			if len(r.scanner.Bytes()) > 0 {
+				err := json.Unmarshal(r.scanner.Bytes(), &URLsInFile)
+				if err != nil {
+					panic(err)
+
+				}
+				for i := 0; i < len(urls); i++ {
+					var temp URLArrayOutgoing
+					temp.Id = urls[i].Id
+					for j := 0; j < len(URLsInFile); j++ {
+						if urls[i].URL == URLsInFile[j].URL {
+							temp.Short = config.ServerConfig.ResURL + "/" + URLsInFile[j].Result
+						}
+					}
+					if temp.Short == "" {
+						newURL := URLEncoded{
+							Result: generateRandomID(),
+							URL:    urls[i].URL,
+						}
+						URLsInFile = append(URLsInFile, newURL)
+						temp.Short = config.ServerConfig.ResURL + "/" + newURL.Result
+					}
+					res = append(res, temp)
+				}
+
+				if len(URLsInFile) > 0 {
+
+					w, errW := newWriteURL()
+					if errW != nil {
+						panic(errW.Error())
+
+					}
+
+					byteURL, err := json.Marshal(URLsInFile)
+					if err != nil {
+						panic(err.Error())
+					}
+					w.writer.Write(byteURL)
+
+					w.writer.Flush()
+
+				}
+
+			}
+		} else {
+			for i := 0; i < len(urls); i++ {
+				var temp URLArrayOutgoing
+				temp.Id = urls[i].Id
+				for j := 0; j < len(EncodedURLs); j++ {
+					if urls[i].URL == EncodedURLs[j].URL {
+						temp.Short = config.ServerConfig.ResURL + "/" + EncodedURLs[j].Result
+					}
+				}
+				if temp.Short == "" {
+					newURL := URLEncoded{
+						Result: generateRandomID(),
+						URL:    urls[i].URL,
+					}
+					temp.Short = config.ServerConfig.ResURL + "/" + newURL.Result
+					EncodedURLs = append(EncodedURLs, newURL)
+
+				}
+
+				res = append(res, temp)
+			}
+		}
+	}
+
+	return res
 }
 
 // Get поиск существующей ссылки по ID
