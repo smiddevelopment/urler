@@ -17,8 +17,8 @@ func TestAdd(t *testing.T) {
 
 	for _, test := range tests { // цикл по всем тестам
 		t.Run(test.name, func(t *testing.T) {
-			if val := Add(test.value); val != test.want {
-				t.Errorf("Add() = " + val + ", want " + test.want)
+			if val := Add(test.value); val.Message != test.want {
+				t.Errorf("Add() = " + val.Message + ", want " + test.want)
 			}
 		})
 	}
