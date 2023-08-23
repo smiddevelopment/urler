@@ -21,12 +21,12 @@ type URLEncoded struct {
 }
 
 type URLArrayIncoming struct {
-	Id  string `json:"correlation_id,omitempty"`
+	ID  string `json:"correlation_id,omitempty"`
 	URL string `json:"original_url,omitempty"`
 }
 
 type URLArrayOutgoing struct {
-	Id    string `json:"correlation_id,omitempty"`
+	ID    string `json:"correlation_id,omitempty"`
 	Short string `json:"short_url,omitempty"`
 }
 
@@ -52,7 +52,7 @@ func Add(url string) string {
 
 	// Поиск существующей ссылки по URL в базе данных, файле или массиве оперативной памяти
 	if config.ServerConfig.DBURL != "" {
-		var res = getIdFromDB(url)
+		var res = getIDFromDB(url)
 		if res != "" {
 			return res
 		}
@@ -139,7 +139,7 @@ func AddRange(urls []URLArrayIncoming) []URLArrayOutgoing {
 			var URLsToAdd []URLEncoded
 			for i := 0; i < len(urls); i++ {
 				var temp URLArrayOutgoing
-				temp.Id = urls[i].Id
+				temp.ID = urls[i].ID
 
 				var result string
 				row := db.QueryRowContext(context.Background(),
@@ -196,7 +196,7 @@ func AddRange(urls []URLArrayIncoming) []URLArrayOutgoing {
 				}
 				for i := 0; i < len(urls); i++ {
 					var temp URLArrayOutgoing
-					temp.Id = urls[i].Id
+					temp.ID = urls[i].ID
 					for j := 0; j < len(URLsInFile); j++ {
 						if urls[i].URL == URLsInFile[j].URL {
 							temp.Short = config.ServerConfig.ResURL + "/" + URLsInFile[j].Result
@@ -235,7 +235,7 @@ func AddRange(urls []URLArrayIncoming) []URLArrayOutgoing {
 		} else {
 			for i := 0; i < len(urls); i++ {
 				var temp URLArrayOutgoing
-				temp.Id = urls[i].Id
+				temp.ID = urls[i].ID
 				for j := 0; j < len(EncodedURLs); j++ {
 					if urls[i].URL == EncodedURLs[j].URL {
 						temp.Short = config.ServerConfig.ResURL + "/" + EncodedURLs[j].Result
@@ -433,7 +433,7 @@ func addURLToDB(urls URLEncoded) error {
 	return nil
 }
 
-func getIdFromDB(URLOrigin string) string {
+func getIDFromDB(URLOrigin string) string {
 	var result string
 
 	if URLOrigin != "" {
